@@ -1,0 +1,38 @@
+{
+    "name": "cego/auth-middleware",
+    "description": "Authentication middleware for laravel",
+    "type": "library",
+    "license": "MIT",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "authors": [
+        {
+            "name": "Nikolaj Boel Jensen",
+            "email": "nbj@creationsftw.com"
+        },
+        {
+            "name": "Mads Worsøe",
+            "email": "mawo@cego.dk"
+        }
+    ],
+    "require": {
+        "illuminate/support": "^7.0|^8.0"
+    },
+    "require-dev": {
+        "symfony/http-kernel": "^4.4|^5.0",
+        "friendsofphp/php-cs-fixer": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Cego\\": "src/"
+        }
+    },
+    "autoload-dev": {},
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Cego\\AuthMiddleware\\AuthMiddlewareServiceProvider"
+            ]
+        }
+    }
+}
