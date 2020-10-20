@@ -2,6 +2,7 @@
 
 namespace Cego\AuthMiddleware;
 
+use Closure;
 use App\User;
 use Illuminate\Support\Facades\Auth;
 use Cego\AuthMiddleware\Exceptions\RemoteUserAuthenticationFailed;
