@@ -34,8 +34,8 @@ class RemoteUserAuthentication
         // is done either by fetching the user from the database
         // or creating a new entry for the user. In both cases
         // the user will be automatically logged in.
-        $user = User::firstOrCreate([
-            'username' => $request->header('remote-user')
+        $user = config("auth-middleware.model")::firstOrCreate([
+            config("auth-middleware.column") => $request->header('remote-user')
         ]);
 
         Auth::login($user);
