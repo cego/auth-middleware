@@ -12,7 +12,7 @@ return [
     |
     */
 
-    "model" => App\Models\User::class,
+    "model"  => App\Models\User::class,
     "column" => "username",
 
 ];
