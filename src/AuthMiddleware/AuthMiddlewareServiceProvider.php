@@ -16,6 +16,12 @@ class AuthMiddlewareServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // Publish resource to the project consuming this package
+        $this->publishes([
+            __DIR__ . '/../../publishable/config/auth-middleware.php' => config_path('auth-middleware.php'),
+        ]);
+
+        // Push Middleware to global middleware stack
         $kernel = $this->app->make(Kernel::class);
         $kernel->pushMiddleware(RemoteUserAuthentication::class);
     }
