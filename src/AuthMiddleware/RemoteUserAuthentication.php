@@ -3,7 +3,7 @@
 namespace Cego\AuthMiddleware;
 
 use Closure;
-use App\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Cego\AuthMiddleware\Exceptions\RemoteUserAuthenticationFailed;
 
@@ -12,8 +12,8 @@ class RemoteUserAuthentication
     /**
      * Handle an incoming request.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param \Closure $next
+     * @param Request $request
+     * @param Closure $next
      *
      * @return mixed
      *
@@ -34,8 +34,8 @@ class RemoteUserAuthentication
         // is done either by fetching the user from the database
         // or creating a new entry for the user. In both cases
         // the user will be automatically logged in.
-        $user = User::firstOrCreate([
-            'username' => $request->header('remote-user')
+        $user = config("auth-middleware.model")::firstOrCreate([
+            config("auth-middleware.column") => $request->header('remote-user')
         ]);
 
         Auth::login($user);
