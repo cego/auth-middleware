@@ -9,6 +9,19 @@ use Illuminate\Contracts\Container\BindingResolutionException;
 class AuthMiddlewareServiceProvider extends ServiceProvider
 {
     /**
+     * Register any application services.
+     *
+     * @return void
+     */
+    public function register()
+    {
+        // We only use single layer configs, and this allows config changes to not be breaking changes
+        $this->mergeConfigFrom(
+            __DIR__ . '/../../publishable/config/auth-middleware.php','auth-middleware'
+        );
+    }
+
+    /**
      * Bootstrap any application services.
      *
      * @return void

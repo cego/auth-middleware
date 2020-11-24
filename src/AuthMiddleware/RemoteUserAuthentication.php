@@ -5,6 +5,7 @@ namespace Cego\AuthMiddleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Cego\AuthMiddleware\Exceptions\RemoteUserAuthenticationFailed;
 
 class RemoteUserAuthentication
@@ -28,19 +29,68 @@ class RemoteUserAuthentication
             throw new RemoteUserAuthenticationFailed;
         }
 
-        // As the remote-user header contains the username of the user
-        // that has been authenticated by authentication proxy, we
-        // need to ensure the user is actually known to us. This
-        // is done either by fetching the user from the database
-        // or creating a new entry for the user. In both cases
-        // the user will be automatically logged in.
-        $user = config("auth-middleware.model")::firstOrCreate([
-            config("auth-middleware.column") => $request->header('remote-user')
-        ]);
-
-        Auth::login($user);
+        // To allow the use of Auth::user and related subsystems of Laravel,
+        // we must login an authenticatable user model.
+        // This can either be for an in-memory model, or one persisted to the database
+        Auth::login($this->getAuthenticatedUser($request->header('remote-user'), $request->header("remote-user-uuid")));
 
         // Proceed to the next middleware
         return $next($request);
+    }
+
+    /**
+     * Returns the authenticated users model.
+     *
+     * As the remote-user header contains the username of the user
+     * that has been authenticated by authentication proxy, we
+     * need to ensure the user is actually known to us. This
+     * is done many ways, by fetching the user from the database,
+     * creating a new entry for the user or using an in-memory instance.
+     * In all cases the user will automatically be logged in.
+     *
+     * @param string $remoteUser
+     * @param string $remoteUserUuid
+     *
+     * @return Authenticatable
+     */
+    protected function getAuthenticatedUser(string $remoteUser, string $remoteUserUuid): Authenticatable
+    {
+        $modelClass = config("auth-middleware.model");
+        $userData = $this->getModelColumnAndValues($remoteUser, $remoteUserUuid);
+
+        if ($this->isInMemoryOnly()) {
+            return $modelClass::make($userData);
+        }
+
+        return $modelClass::firstOrCreate($userData);
+    }
+
+    /**
+     * Returns the column an value pairs of the authenticated user.
+     *
+     * @param string $remoteUser
+     * @param string $remoteUserUuid
+     *
+     * @return string[]
+     */
+    protected function getModelColumnAndValues(string $remoteUser, string $remoteUserUuid): array
+    {
+        $data = [config("auth-middleware.column") => $remoteUser];
+
+        if (config("auth-middleware.uuid-primary-key") === true) {
+            $data["id"] = $remoteUserUuid;
+        }
+
+        return $data;
+    }
+
+    /**
+     * Returns true if the user model should only be stored in-memory and not persisted to DB
+     *
+     * @return bool
+     */
+    protected function isInMemoryOnly(): bool
+    {
+        return config("auth-middleware.in-memory", false) === true;
     }
 }

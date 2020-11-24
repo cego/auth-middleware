@@ -12,7 +12,9 @@ return [
     |
     */
 
-    "model"  => App\Models\User::class,
-    "column" => "username",
+    "model"            => App\Models\User::class,
+    "column"           => "username",
+    "in-memory"        => false,
+    "uuid-primary-key" => false,     // Must default to false to be non-breaking
 
 ];
