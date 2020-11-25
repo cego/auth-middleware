@@ -57,8 +57,8 @@ class RemoteUserAuthentication
         $modelClass = config("auth-middleware.model");
 
         $modelData = [
-            config("remote_user_uuid_column") => $request->header("remote-user-uuid"),
-            config("auth-middleware.column")  => $request->header("remote-user"),
+            config("auth-middleware.remote_user_uuid_column") => $request->header("remote-user-uuid"),
+            config("auth-middleware.remote_user_column")      => $request->header("remote-user"),
         ];
 
         // If in-memory only, then there is no need to touch the database and we can opt out here
