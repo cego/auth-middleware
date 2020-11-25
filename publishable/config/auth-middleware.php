@@ -12,8 +12,9 @@ return [
     |
     */
 
-    "model"            => App\Models\User::class,
-    "column"           => "username",
-    "in_memory"        => false,
+    "model"                   => App\Models\User::class,
+    "remote_user_column"      => "username",
+    "remote_user_uuid_column" => "uuid",
+    "in_memory"               => false,
 
 ];

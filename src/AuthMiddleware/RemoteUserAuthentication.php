@@ -56,17 +56,17 @@ class RemoteUserAuthentication
     {
         $modelClass = config("auth-middleware.model");
 
+        $modelData = [
+            config("remote_user_uuid_column") => $request->header("remote-user-uuid"),
+            config("auth-middleware.column")  => $request->header("remote-user"),
+        ];
+
         // If in-memory only, then there is no need to touch the database and we can opt out here
         if ($this->isInMemoryOnly()) {
-            return $modelClass::make()->forceFill([
-                "id"                             => $request->header("remote-user-uuid"),
-                config("auth-middleware.column") => $request->header("remote-user"),
-            ]);
+            return $modelClass::make()->forceFill($modelData);
         }
 
-        return $modelClass::firstOrCreate([
-            config("auth-middleware.column") => $request->header("remote-user"),
-        ]);
+        return $modelClass::firstOrCreate($modelData);
     }
 
     /**
