@@ -25,7 +25,7 @@ class RemoteUserAuthentication
         // We expect the remote-user header to be set. This is done by
         // the authentication proxy we need to put in front of this
         // service in order to facilitate authentication.
-        if ( ! $request->hasHeader('remote-user')) {
+        if ( ! $request->hasHeader('remote-user') || ! $request->hasHeader('remote-user-uuid')) {
             throw new RemoteUserAuthenticationFailed;
         }
 
@@ -56,13 +56,36 @@ class RemoteUserAuthentication
     protected function getAuthenticatedUser(string $remoteUser, string $remoteUserUuid): Authenticatable
     {
         $modelClass = config("auth-middleware.model");
-        $userData = $this->getModelColumnAndValues($remoteUser, $remoteUserUuid);
+        $modelData = $this->getModelData($remoteUser, $remoteUserUuid);
 
+        // If in-memory only, then there is no need to touch the database and we can opt out here
         if ($this->isInMemoryOnly()) {
-            return $modelClass::make($userData);
+            $user = new $modelClass();
+            $user->forceFill($modelData);
+
+            return $user;
         }
 
-        return $modelClass::firstOrCreate($userData);
+        return $this->firstOrCreate($modelClass, $modelData);
+    }
+
+    /**
+     * Fetches the model from the database, or creates it
+     *
+     * @param mixed $modelClass
+     * @param array $modelData
+     *
+     * @return mixed
+     */
+    protected function firstOrCreate($modelClass, array $modelData)
+    {
+        // first
+        if (! is_null($instance = $modelClass::where($modelData)->first())) {
+            return $instance;
+        }
+
+        // or create
+        return $modelClass::forceCreate($modelData);
     }
 
     /**
@@ -73,7 +96,7 @@ class RemoteUserAuthentication
      *
      * @return string[]
      */
-    protected function getModelColumnAndValues(string $remoteUser, string $remoteUserUuid): array
+    protected function getModelData(string $remoteUser, string $remoteUserUuid): array
     {
         $data = [config("auth-middleware.column") => $remoteUser];
 
