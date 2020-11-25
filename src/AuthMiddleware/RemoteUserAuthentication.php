@@ -56,36 +56,18 @@ class RemoteUserAuthentication
     protected function getAuthenticatedUser(string $remoteUser, string $remoteUserUuid): Authenticatable
     {
         $modelClass = config("auth-middleware.model");
-        $modelData = $this->getModelData($remoteUser, $remoteUserUuid);
 
         // If in-memory only, then there is no need to touch the database and we can opt out here
         if ($this->isInMemoryOnly()) {
             $user = new $modelClass();
-            $user->forceFill($modelData);
+            $user->forceFill($this->getModelData($remoteUser, $remoteUserUuid));
 
             return $user;
         }
 
-        return $this->firstOrCreate($modelClass, $modelData);
-    }
-
-    /**
-     * Fetches the model from the database, or creates it
-     *
-     * @param mixed $modelClass
-     * @param array $modelData
-     *
-     * @return mixed
-     */
-    protected function firstOrCreate($modelClass, array $modelData)
-    {
-        // first
-        if (! is_null($instance = $modelClass::where($modelData)->first())) {
-            return $instance;
-        }
-
-        // or create
-        return $modelClass::forceCreate($modelData);
+        return $modelClass::firstOrCreate([
+            config("auth-middleware.column") => $remoteUser,
+        ]);
     }
 
     /**
