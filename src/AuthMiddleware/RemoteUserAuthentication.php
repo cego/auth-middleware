@@ -25,14 +25,14 @@ class RemoteUserAuthentication
         // We expect the remote-user header to be set. This is done by
         // the authentication proxy we need to put in front of this
         // service in order to facilitate authentication.
-        if ( ! ($request->hasHeader('remote-user') && $request->hasHeader('remote-user-uuid'))) {
+        if ( ! $request->hasHeader('remote-user')) {
             throw new RemoteUserAuthenticationFailed;
         }
 
         // To allow the use of Auth::user and related subsystems of Laravel,
         // we must login an authenticatable user model.
         // This can either be for an in-memory model, or one persisted to the database
-        Auth::login($this->getAuthenticatedUser($request->header('remote-user'), $request->header("remote-user-uuid")));
+        Auth::login($this->getAuthenticatedUser($request));
 
         // Proceed to the next middleware
         return $next($request);
@@ -48,45 +48,25 @@ class RemoteUserAuthentication
      * creating a new entry for the user or using an in-memory instance.
      * In all cases the user will automatically be logged in.
      *
-     * @param string $remoteUser
-     * @param string $remoteUserUuid
+     * @param Request $request
      *
      * @return Authenticatable
      */
-    protected function getAuthenticatedUser(string $remoteUser, string $remoteUserUuid): Authenticatable
+    protected function getAuthenticatedUser(Request $request): Authenticatable
     {
         $modelClass = config("auth-middleware.model");
 
         // If in-memory only, then there is no need to touch the database and we can opt out here
         if ($this->isInMemoryOnly()) {
-            $user = new $modelClass();
-            $user->forceFill($this->getModelData($remoteUser, $remoteUserUuid));
-
-            return $user;
+            return $modelClass::make()->forceFill([
+                "id"                             => $request->header("remote-user-uuid"),
+                config("auth-middleware.column") => $request->header("remote-user"),
+            ]);
         }
 
         return $modelClass::firstOrCreate([
-            config("auth-middleware.column") => $remoteUser,
+            config("auth-middleware.column") => $request->header("remote-user"),
         ]);
-    }
-
-    /**
-     * Returns the column an value pairs of the authenticated user.
-     *
-     * @param string $remoteUser
-     * @param string $remoteUserUuid
-     *
-     * @return string[]
-     */
-    protected function getModelData(string $remoteUser, string $remoteUserUuid): array
-    {
-        $data = [config("auth-middleware.column") => $remoteUser];
-
-        if (config("auth-middleware.uuid-primary-key") === true) {
-            $data["id"] = $remoteUserUuid;
-        }
-
-        return $data;
     }
 
     /**
