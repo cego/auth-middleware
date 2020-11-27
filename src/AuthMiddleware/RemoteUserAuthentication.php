@@ -76,6 +76,6 @@ class RemoteUserAuthentication
      */
     protected function isInMemoryOnly(): bool
     {
-        return config("auth-middleware.in-memory", false) === true;
+        return config("auth-middleware.in_memory", false) === true;
     }
 }
